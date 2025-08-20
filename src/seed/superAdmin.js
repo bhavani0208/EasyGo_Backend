@@ -11,7 +11,8 @@ import bcrypt from "bcryptjs";
     await connectDB();
 
     // seed superadmin
-    const email = process.env.SUPERADMIN_EMAIL || "superadmin@example.com";
+    const email =
+      process.env.SUPERADMIN_EMAIL || "superadmin@trafficroutes.com";
     const password = process.env.SUPERADMIN_PASSWORD || "Passw0rd!";
     const name = process.env.SUPERADMIN_NAME || "Root User";
 

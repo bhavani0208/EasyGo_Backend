@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed:superadmin": "node src/seed/superAdmin.js"
+    "seed:superadmin": "node src/seed/superAdmin.js",
+    "start": "nodemon server.js"
   },
   "repository": {
     "type": "git",
