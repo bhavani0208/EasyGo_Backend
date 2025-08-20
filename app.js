@@ -4,7 +4,7 @@ import { httpLogger } from "./src/utils/logger.js";
 import apiRouter from "./src/routes/index.js";
 import { swaggerMiddleware } from "./src/config/swagger.js";
 import { errorHandler } from "./src/middlewares/errorHandler.js";
-
+import { adminJs, router as adminRouter } from "./src/admin/admin.js";
 const app = express();
 
 app.use(
@@ -20,6 +20,8 @@ app.use(httpLogger);
 
 // Swagger UI at /api-docs
 app.use("/api-docs", ...swaggerMiddleware);
+
+app.use(adminJs.options.rootPath, adminRouter);
 
 // API routes under /api
 app.use("/api", apiRouter);

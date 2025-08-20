@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { connectDB } from "./src/config/db.js";
 import { env } from "./src/config/env.js";
+import { adminJs, router as adminRouter } from "./src/admin/admin.js";
 
 const start = async () => {
   try {

@@ -18,7 +18,7 @@ export async function geocodeAddress(address) {
       headers: { "User-Agent": "EasyGoApp/1.0" }, // required by Nominatim
     });
 
-    console.log("📡 Raw Response:", data);
+    //onsole.log("📡 Raw Response:", data);
     if (data && data.length > 0) {
       const { lon, lat } = data[0];
       return [parseFloat(lon), parseFloat(lat)];
