@@ -7,7 +7,14 @@ import { errorHandler } from "./src/middlewares/errorHandler.js";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // allow all (for dev)
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 app.use(httpLogger);
 

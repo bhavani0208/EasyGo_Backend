@@ -7,18 +7,22 @@ const options = {
     info: {
       title: "Employee Routing & Notification API",
       version: "1.0.0",
-      description: "Multi-tenant hierarchy with routing, invitations, and notifications"
+      description:
+        "Multi-tenant hierarchy with routing, invitations, and notifications",
     },
-    servers: [{ url: "/api" }],
+    servers: [{ url: "http://localhost:5000/api" }],
     components: {
       securitySchemes: {
-        bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" }
-      }
+        bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+      },
     },
-    security: [{ bearerAuth: [] }]
+    security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/*.js"] // we’ll annotate routes as we add them
+  apis: ["./src/routes/*.js"], // we’ll annotate routes as we add them
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
-export const swaggerMiddleware = [swaggerUi.serve, swaggerUi.setup(swaggerSpec)];
+export const swaggerMiddleware = [
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec),
+];

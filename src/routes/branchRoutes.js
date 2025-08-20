@@ -2,11 +2,18 @@ import { Router } from "express";
 import { validate } from "../middlewares/validator.js";
 import { createBranchSchema } from "../validators/schemas.js";
 import {
-  createBranch, listBranchesByCompany, getBranch, updateBranch, deleteBranch
+  createBranch,
+  listBranchesByCompany,
+  getBranch,
+  updateBranch,
+  deleteBranch,
 } from "../controllers/branchController.js";
 import { requireAuth } from "../middlewares/authMiddleware.js";
 import { requireRoles } from "../middlewares/roleMiddleware.js";
-import { canAccessCompanyParam, canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
+import {
+  canAccessCompanyParam,
+  canAccessCompanyOfEntity,
+} from "../middlewares/scopeMiddleware.js";
 
 const router = Router();
 
@@ -30,12 +37,29 @@ const router = Router();
  *             type: object
  *             required: [name, company]
  *             properties:
- *               name: { type: string }
- *               address: { type: string }
- *               company: { type: string, description: "Company ObjectId" }
- *     responses: { 201: { description: Created } }
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *                 description: "Full address of the branch. If provided without location, coordinates will be auto-resolved using OpenStreetMap."
+ *               company:
+ *                 type: string
+ *                 description: "Company ObjectId"
+ *
+ *
+ *     responses:
+ *       201:
+ *         description: Branch created successfully
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyParam, validate(createBranchSchema), createBranch);
+
+router.post(
+  "/",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyParam,
+  validate(createBranchSchema),
+  createBranch
+);
 
 /**
  * @swagger
@@ -47,7 +71,13 @@ router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessComp
  *     parameters: [ { in: path, name: companyId, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: OK } }
  */
-router.get("/company/:companyId", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyParam, listBranchesByCompany);
+router.get(
+  "/company/:companyId",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyParam,
+  listBranchesByCompany
+);
 
 /**
  * @swagger
@@ -59,7 +89,13 @@ router.get("/company/:companyId", requireAuth, requireRoles("SUPERADMIN", "ADMIN
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: OK } }
  */
-router.get("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("branch"), getBranch);
+router.get(
+  "/:id",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("branch"),
+  getBranch
+);
 
 /**
  * @swagger
@@ -73,7 +109,13 @@ router.get("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCo
  *       content: { application/json: { schema: { type: object, properties: { name: { type: string }, address: { type: string } } } } }
  *     responses: { 200: { description: OK } }
  */
-router.put("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("branch"), updateBranch);
+router.put(
+  "/:id",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("branch"),
+  updateBranch
+);
 
 /**
  * @swagger
@@ -85,6 +127,12 @@ router.put("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCo
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: Deleted } }
  */
-router.delete("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("branch"), deleteBranch);
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("branch"),
+  deleteBranch
+);
 
 export default router;
