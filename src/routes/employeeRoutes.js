@@ -1,6 +1,12 @@
 import { Router } from "express";
 import {
-  createEmployee, listEmployeesByBranch, getEmployee, updateEmployee, deleteEmployee
+  createEmployee,
+  listEmployeesByBranch,
+  listEmployeesByCompany,
+  getEmployee,
+  getMyEmployee,
+  updateEmployee,
+  deleteEmployee,
 } from "../controllers/employeeController.js";
 import { requireAuth } from "../middlewares/authMiddleware.js";
 import { requireRoles } from "../middlewares/roleMiddleware.js";
@@ -34,7 +40,13 @@ const router = Router();
  *               homeLocation: { type: string }
  *     responses: { 201: { description: Created } }
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), createEmployee);
+router.post(
+  "/",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("employee"),
+  createEmployee
+);
 
 /**
  * @swagger
@@ -46,7 +58,25 @@ router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessComp
  *     parameters: [ { in: path, name: branchId, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: OK } }
  */
-router.get("/branch/:branchId", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), listEmployeesByBranch);
+router.get(
+  "/branch/:branchId",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("employee"),
+  listEmployeesByBranch
+);
+
+// List employees by company (SUPERADMIN or admin of company)
+router.get(
+  "/company/:companyId",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("employee"),
+  listEmployeesByCompany
+);
+
+// Current employee (EMPLOYEE role)
+router.get("/me", requireAuth, requireRoles("EMPLOYEE"), getMyEmployee);
 
 /**
  * @swagger
@@ -58,7 +88,12 @@ router.get("/branch/:branchId", requireAuth, requireRoles("SUPERADMIN", "ADMIN")
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: OK } }
  */
-router.get("/:id", requireAuth, canAccessCompanyOfEntity("employee"), getEmployee);
+router.get(
+  "/:id",
+  requireAuth,
+  canAccessCompanyOfEntity("employee"),
+  getEmployee
+);
 
 /**
  * @swagger
@@ -79,7 +114,12 @@ router.get("/:id", requireAuth, canAccessCompanyOfEntity("employee"), getEmploye
  *               branch: { type: string, description: "Admins/Superadmins only" }
  *     responses: { 200: { description: OK } }
  */
-router.put("/:id", requireAuth, canAccessCompanyOfEntity("employee"), updateEmployee);
+router.put(
+  "/:id",
+  requireAuth,
+  canAccessCompanyOfEntity("employee"),
+  updateEmployee
+);
 
 /**
  * @swagger
@@ -91,6 +131,12 @@ router.put("/:id", requireAuth, canAccessCompanyOfEntity("employee"), updateEmpl
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: Deleted } }
  */
-router.delete("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), deleteEmployee);
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  canAccessCompanyOfEntity("employee"),
+  deleteEmployee
+);
 
 export default router;

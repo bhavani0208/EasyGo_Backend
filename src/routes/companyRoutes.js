@@ -3,11 +3,19 @@ import { validate } from "../middlewares/validator.js";
 import { createCompanySchema } from "../validators/schemas.js";
 
 import {
-  createCompany, listCompanies, getCompany, updateCompany, deleteCompany
+  createCompany,
+  listCompanies,
+  getCompany,
+  updateCompany,
+  deleteCompany,
 } from "../controllers/companyController.js";
+import { companyService } from "../services/companyService.js";
 import { requireAuth } from "../middlewares/authMiddleware.js";
 import { requireRoles } from "../middlewares/roleMiddleware.js";
-import { canAccessCompanyParam, canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
+import {
+  canAccessCompanyParam,
+  canAccessCompanyOfEntity,
+} from "../middlewares/scopeMiddleware.js";
 
 const router = Router();
 
@@ -28,7 +36,13 @@ const router = Router();
  *       content: { application/json: { schema: { type: object, properties: { name: { type: string } }, required: [name] } } }
  *     responses: { 201: { description: Created } }
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN"), validate(createCompanySchema), createCompany);
+router.post(
+  "/",
+  requireAuth,
+  requireRoles("SUPERADMIN"),
+  validate(createCompanySchema),
+  createCompany
+);
 
 /**
  * @swagger
@@ -43,6 +57,22 @@ router.get("/", requireAuth, requireRoles("SUPERADMIN"), listCompanies);
 
 /**
  * @swagger
+ * /companies/public:
+ *   get:
+ *     summary: List companies for public use (registration dropdown)
+ *     tags: [Companies]
+ *     responses: { 200: { description: OK } }
+ */
+router.get("/public", async (req, res, next) => {
+  try {
+    res.json(await companyService.listPublic());
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @swagger
  * /companies/{id}:
  *   get:
  *     summary: Get company by id (SUPERADMIN or Admin of same company)
@@ -51,7 +81,12 @@ router.get("/", requireAuth, requireRoles("SUPERADMIN"), listCompanies);
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: OK } }
  */
-router.get("/:id", requireAuth, canAccessCompanyOfEntity("company"), getCompany);
+router.get(
+  "/:id",
+  requireAuth,
+  canAccessCompanyOfEntity("company"),
+  getCompany
+);
 
 /**
  * @swagger
