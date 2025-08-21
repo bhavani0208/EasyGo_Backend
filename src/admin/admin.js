@@ -4,7 +4,8 @@ import * as AdminJSMongoose from "@adminjs/mongoose";
 import mongoose from "mongoose";
 import express from "express";
 import { geocodeAddress } from "../utils/geocode.js";
-// Import your models
+
+// Import models
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import Branch from "../models/Branch.js";
@@ -12,23 +13,22 @@ import Employee from "../models/Employee.js";
 
 AdminJS.registerAdapter(AdminJSMongoose);
 
-// Role-based access helper
-const canAccess =
-  (roles) =>
-  ({ currentAdmin }) =>
-    currentAdmin && roles.includes(currentAdmin.role);
+// ✅ Role-based access helper (SUPERADMIN only)
+const canAccessSuperadmin = ({ currentAdmin }) =>
+  currentAdmin && currentAdmin.role === "SUPERADMIN";
 
 const adminOptions = {
+  rootPath: "/admin",
   resources: [
     {
       resource: User,
       options: {
         navigation: { name: "Users", icon: "User" },
         actions: {
-          list: { isAccessible: canAccess(["SUPERADMIN"]) },
-          new: { isAccessible: canAccess(["SUPERADMIN"]) },
-          edit: { isAccessible: canAccess(["SUPERADMIN"]) },
-          delete: { isAccessible: canAccess(["SUPERADMIN"]) },
+          list: { isAccessible: canAccessSuperadmin },
+          new: { isAccessible: canAccessSuperadmin },
+          edit: { isAccessible: canAccessSuperadmin },
+          delete: { isAccessible: canAccessSuperadmin },
         },
       },
     },
@@ -37,10 +37,10 @@ const adminOptions = {
       options: {
         navigation: { name: "Organizations", icon: "Building" },
         actions: {
-          list: { isAccessible: canAccess(["SUPERADMIN"]) },
-          new: { isAccessible: canAccess(["SUPERADMIN"]) },
-          edit: { isAccessible: canAccess(["SUPERADMIN"]) },
-          delete: { isAccessible: canAccess(["SUPERADMIN"]) },
+          list: { isAccessible: canAccessSuperadmin },
+          new: { isAccessible: canAccessSuperadmin },
+          edit: { isAccessible: canAccessSuperadmin },
+          delete: { isAccessible: canAccessSuperadmin },
         },
       },
     },
@@ -52,46 +52,10 @@ const adminOptions = {
           location: { isVisible: false }, // hide location from forms
         },
         actions: {
-          list: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
-              const { currentAdmin } = ctx;
-              if (currentAdmin.role === "ADMIN") {
-                req.query = {
-                  ...req.query,
-                  filters: { company: currentAdmin.company },
-                };
-              }
-              return req;
-            },
-          },
+          list: { isAccessible: canAccessSuperadmin },
           new: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
-              const { currentAdmin } = ctx;
-
-              if (req.payload) {
-                if (currentAdmin.role === "ADMIN") {
-                  req.payload.company = currentAdmin.company.toString();
-                }
-
-                if (req.payload.address) {
-                  const coords = await geocodeAddress(req.payload.address);
-                  if (coords) {
-                    req.payload.location = {
-                      type: "Point",
-                      coordinates: coords,
-                    };
-                  }
-                }
-              }
-
-              return req;
-            },
-          },
-          edit: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
+            isAccessible: canAccessSuperadmin,
+            before: async (req) => {
               if (req.payload && req.payload.address) {
                 const coords = await geocodeAddress(req.payload.address);
                 if (coords) {
@@ -104,7 +68,22 @@ const adminOptions = {
               return req;
             },
           },
-          delete: { isAccessible: canAccess(["SUPERADMIN", "ADMIN"]) },
+          edit: {
+            isAccessible: canAccessSuperadmin,
+            before: async (req) => {
+              if (req.payload && req.payload.address) {
+                const coords = await geocodeAddress(req.payload.address);
+                if (coords) {
+                  req.payload.location = {
+                    type: "Point",
+                    coordinates: coords,
+                  };
+                }
+              }
+              return req;
+            },
+          },
+          delete: { isAccessible: canAccessSuperadmin },
         },
       },
     },
@@ -113,51 +92,13 @@ const adminOptions = {
       options: {
         navigation: { name: "Employees", icon: "UserFriends" },
         properties: {
-          location: { isVisible: false }, // hide location from forms
+          location: { isVisible: false },
         },
         actions: {
-          list: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
-              const { currentAdmin } = ctx;
-              if (currentAdmin.role === "ADMIN") {
-                req.query = {
-                  ...req.query,
-                  filters: { branch: currentAdmin.branch },
-                };
-              }
-              return req;
-            },
-          },
+          list: { isAccessible: canAccessSuperadmin },
           new: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
-              const { currentAdmin } = ctx;
-
-              if (req.payload) {
-                // ✅ auto-assign company
-                if (currentAdmin.role === "ADMIN") {
-                  req.payload.company = currentAdmin.company.toString();
-                }
-
-                // ✅ auto-geocode homeLocation if given
-                if (req.payload.homeLocation) {
-                  const coords = await geocodeAddress(req.payload.homeLocation);
-                  if (coords) {
-                    req.payload.location = {
-                      type: "Point",
-                      coordinates: coords,
-                    };
-                  }
-                }
-              }
-
-              return req;
-            },
-          },
-          edit: {
-            isAccessible: canAccess(["SUPERADMIN", "ADMIN"]),
-            before: async (req, ctx) => {
+            isAccessible: canAccessSuperadmin,
+            before: async (req) => {
               if (req.payload && req.payload.homeLocation) {
                 const coords = await geocodeAddress(req.payload.homeLocation);
                 if (coords) {
@@ -170,22 +111,38 @@ const adminOptions = {
               return req;
             },
           },
-          delete: { isAccessible: canAccess(["SUPERADMIN", "ADMIN"]) },
+          edit: {
+            isAccessible: canAccessSuperadmin,
+            before: async (req) => {
+              if (req.payload && req.payload.homeLocation) {
+                const coords = await geocodeAddress(req.payload.homeLocation);
+                if (coords) {
+                  req.payload.location = {
+                    type: "Point",
+                    coordinates: coords,
+                  };
+                }
+              }
+              return req;
+            },
+          },
+          delete: { isAccessible: canAccessSuperadmin },
         },
       },
     },
   ],
-  rootPath: "/admin",
 };
 
 const adminJs = new AdminJS(adminOptions);
 
-// Authentication setup
+// ✅ Authentication — only SUPERADMIN can log in
 const router = AdminJSExpress.buildAuthenticatedRouter(adminJs, {
   authenticate: async (email, password) => {
     const user = await User.findOne({ email });
     if (user && (await user.comparePassword(password))) {
-      return user; // user object is stored in session as currentAdmin
+      if (user.role === "SUPERADMIN") {
+        return user;
+      }
     }
     return null;
   },

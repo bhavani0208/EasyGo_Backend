@@ -7,11 +7,17 @@ import { errorHandler } from "./src/middlewares/errorHandler.js";
 import { adminJs, router as adminRouter } from "./src/admin/admin.js";
 const app = express();
 
+const allowedOrigins = [
+  process.env.FRONTEND_DEV || "http://localhost:3000", // Dev frontend
+];
+
+// ✅ Secure CORS
 app.use(
   cors({
-    origin: "*", // allow all (for dev)
+    origin: ["http://localhost:3000", "http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
