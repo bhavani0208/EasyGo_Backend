@@ -1,18 +1,20 @@
-import { Router } from "express";
-import { register, login } from "../controllers/authController.js";
-
-const router = Router();
+import express from "express";
+import { login, registerAdmin } from "../controllers/authController.js";
+//import { selfRegisterAdmin } from "../controllers/authController.js";
+const router = express.Router();
 
 /**
  * @swagger
- * tags: [Auth]
+ * tags:
+ *   name: Auth
+ *   description: Authentication and registration
  */
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/login:
  *   post:
- *     summary: Register a user (used for seeding/admin flows; in production prefer invitations)
+ *     summary: Login user (SuperAdmin, Admin, or Employee)
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -20,29 +22,74 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, email, password, role]
+ *             required:
+ *               - email
+ *               - password
  *             properties:
- *               name: { type: string }
- *               email: { type: string }
- *               password: { type: string }
- *               role: { type: string, enum: [SUPERADMIN, ADMIN, EMPLOYEE] }
- *               company: { type: string }
- *               branch: { type: string }
- *     responses: { 201: { description: Created } }
+ *               email:
+ *                 type: string
+ *                 example: superadmin@example.com
+ *               password:
+ *                 type: string
+ *                 example: superadmin123
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   example: SUPERADMIN
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Invalid credentials
  */
-router.post("/register", register);
+
+router.post("/login", login);
 
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/register-admin:
  *   post:
- *     summary: Login
+ *     summary: Self register a new Admin under an existing company
  *     tags: [Auth]
  *     requestBody:
  *       required: true
- *       content: { application/json: { schema: { type: object, required: [email, password], properties: { email: { type: string }, password: { type: string } } } } }
- *     responses: { 200: { description: OK } }
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - companyId
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Alice Admin
+ *               email:
+ *                 type: string
+ *                 example: alice@company.com
+ *               password:
+ *                 type: string
+ *                 example: admin123
+ *               companyId:
+ *                 type: string
+ *                 example: 64e12a6bc1234ab567890def
+ *     responses:
+ *       201:
+ *         description: Admin registered successfully
+ *       400:
+ *         description: Invalid company or email already used
  */
-router.post("/login", login);
+
+router.post("/register-admin", registerAdmin);
 
 export default router;

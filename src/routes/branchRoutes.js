@@ -8,7 +8,7 @@ import {
   updateBranch,
   deleteBranch,
 } from "../controllers/branchController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { requireRoles } from "../middlewares/roleMiddleware.js";
 import {
   canAccessCompanyParam,
@@ -18,43 +18,43 @@ import {
 const router = Router();
 
 /**
- * @swagger
- * tags: [Branches]
+ * @openapi
+ * tags:
+ *   - name: Branches
+ *     description: Manage branches of companies
  */
 
 /**
- * @swagger
- * /branches:
+ * @openapi
+ * /api/branches:
  *   post:
- *     summary: Create branch (SUPERADMIN or Admin of the company)
+ *     summary: Create a new branch
+ *     description: Only SUPERADMIN or Admin of the company can create branches.
  *     tags: [Branches]
- *     security: [{ bearerAuth: [] }]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, company]
  *             properties:
  *               name:
  *                 type: string
- *               address:
+ *               location:
  *                 type: string
- *                 description: "Full address of the branch. If provided without location, coordinates will be auto-resolved using OpenStreetMap."
- *               company:
+ *               companyId:
  *                 type: string
- *                 description: "Company ObjectId"
- *
- *
  *     responses:
- *       201:
+ *       "201":
  *         description: Branch created successfully
+ *
  */
-
 router.post(
   "/",
-  requireAuth,
+  protect,
+  authorize,
   requireRoles("SUPERADMIN", "ADMIN"),
   canAccessCompanyParam,
   validate(createBranchSchema),
@@ -62,74 +62,125 @@ router.post(
 );
 
 /**
- * @swagger
- * /branches/company/{companyId}:
+ * @openapi
+ * /api/branches/company/{companyId}:
  *   get:
- *     summary: List branches by company (SUPERADMIN or Admin of the company)
+ *     summary: List branches by company
+ *     description: Only SUPERADMIN or Admin of the company can view.
  *     tags: [Branches]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: companyId, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: OK } }
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "200":
+ *         description: List of branches
+ *
  */
 router.get(
   "/company/:companyId",
-  requireAuth,
+  protect,
+  authorize,
   requireRoles("SUPERADMIN", "ADMIN"),
   canAccessCompanyParam,
   listBranchesByCompany
 );
 
 /**
- * @swagger
- * /branches/{id}:
+ * @openapi
+ * /api/branches/{id}:
  *   get:
- *     summary: Get branch (SUPERADMIN or Admin of same company)
+ *     summary: Get branch by ID
+ *     description: SUPERADMIN or Admin of same company.
  *     tags: [Branches]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: OK } }
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "200":
+ *         description: Branch Object
+ *
  */
 router.get(
   "/:id",
-  requireAuth,
+  protect,
+  authorize,
   requireRoles("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   getBranch
 );
 
 /**
- * @swagger
- * /branches/{id}:
+ * @openapi
+ * /api/branches/{id}:
  *   put:
- *     summary: Update branch (SUPERADMIN or Admin of same company)
+ *     summary: Update branch by Id
+ *     description: SUPERADMIN or Admin of same company.
  *     tags: [Branches]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
  *     requestBody:
- *       content: { application/json: { schema: { type: object, properties: { name: { type: string }, address: { type: string } } } } }
- *     responses: { 200: { description: OK } }
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: Branch updated
  */
 router.put(
   "/:id",
-  requireAuth,
+  protect,
+  authorize,
   requireRoles("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   updateBranch
 );
 
 /**
- * @swagger
- * /branches/{id}:
+ * @openapi
+ * /api/branches/{id}:
  *   delete:
- *     summary: Delete branch (SUPERADMIN or Admin of same company)
+ *     summary: Delete branch by Id
+ *     description: SUPERADMIN or Admin of same company.
  *     tags: [Branches]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: Deleted } }
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "200":
+ *         description: Branch deleted
  */
 router.delete(
   "/:id",
-  requireAuth,
+  protect,
+  authorize,
   requireRoles("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   deleteBranch

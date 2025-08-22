@@ -20,6 +20,13 @@ export const branchService = {
   },
 
   listByCompany: (companyId) => branchRepo.findByCompany(companyId),
+  // async listBranches(user) {
+  //   let filter = {};
+  //   if (user.role === "ADMIN") {
+  //     filter.company = user.company;
+  //   }
+  //   return await branchRepo.find(filter);
+  // },
 
   get: (id) => branchRepo.findById(id),
 
@@ -42,4 +49,14 @@ export const branchService = {
   },
 
   remove: (id) => branchRepo.remove(id),
+  // async deleteBranch(branchId, user) {
+  //   const branch = await branchRepo.findById(branchId);
+  //   if (!branch) throw new Error("Branch not found");
+
+  //   if (user.role === "ADMIN" && String(branch.company._id) !== String(user.company)) {
+  //     throw new Error("Unauthorized");
+  //   }
+
+  //   return await branch.deleteOne();
+  // }
 };

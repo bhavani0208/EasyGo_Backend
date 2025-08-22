@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
-import { env } from "../config/env.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export async function sendEmail({ to, subject, html }) {
   if (!env.SMTP_HOST || !env.SMTP_USER) {

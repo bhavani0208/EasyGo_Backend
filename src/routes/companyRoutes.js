@@ -1,82 +1,81 @@
-import { Router } from "express";
-import { validate } from "../middlewares/validator.js";
-import { createCompanySchema } from "../validators/schemas.js";
-
+import express from "express";
 import {
-  createCompany, listCompanies, getCompany, updateCompany, deleteCompany
+  createCompany,
+  listCompanies,
 } from "../controllers/companyController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
-import { requireRoles } from "../middlewares/roleMiddleware.js";
-import { canAccessCompanyParam, canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 /**
  * @swagger
- * tags: [Companies]
+ * tags:
+ *   name: Companies
+ *   description: Company management (SuperAdmin only for creation)
  */
 
 /**
  * @swagger
- * /companies:
+ * /api/companies:
  *   post:
- *     summary: Create a company (SUPERADMIN)
+ *     summary: Create a new company (SuperAdmin only)
  *     tags: [Companies]
- *     security: [{ bearerAuth: [] }]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
- *       content: { application/json: { schema: { type: object, properties: { name: { type: string } }, required: [name] } } }
- *     responses: { 201: { description: Created } }
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Google
+ *     responses:
+ *       201:
+ *         description: Company created successfully
+ *       400:
+ *         description: Company already exists
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not SuperAdmin)
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN"), validate(createCompanySchema), createCompany);
+
+// Only SuperAdmin can add companies
+router.post("/", protect, authorize("SUPERADMIN"), createCompany);
 
 /**
  * @swagger
- * /companies:
+ * /api/companies:
  *   get:
- *     summary: List companies (SUPERADMIN)
+ *     summary: List all companies
  *     tags: [Companies]
- *     security: [{ bearerAuth: [] }]
- *     responses: { 200: { description: OK } }
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of companies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 64e12a6bc1234ab567890def
+ *                   name:
+ *                     type: string
+ *                     example: Google
+ *       401:
+ *         description: Unauthorized
  */
-router.get("/", requireAuth, requireRoles("SUPERADMIN"), listCompanies);
-
-/**
- * @swagger
- * /companies/{id}:
- *   get:
- *     summary: Get company by id (SUPERADMIN or Admin of same company)
- *     tags: [Companies]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: OK } }
- */
-router.get("/:id", requireAuth, canAccessCompanyOfEntity("company"), getCompany);
-
-/**
- * @swagger
- * /companies/{id}:
- *   put:
- *     summary: Update company (SUPERADMIN)
- *     tags: [Companies]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     requestBody:
- *       content: { application/json: { schema: { type: object, properties: { name: { type: string } } } } }
- *     responses: { 200: { description: OK } }
- */
-router.put("/:id", requireAuth, requireRoles("SUPERADMIN"), updateCompany);
-
-/**
- * @swagger
- * /companies/{id}:
- *   delete:
- *     summary: Delete company (SUPERADMIN)
- *     tags: [Companies]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: Deleted } }
- */
-router.delete("/:id", requireAuth, requireRoles("SUPERADMIN"), deleteCompany);
+// Anyone logged in can view companies (needed for Admin registration)
+router.get("/", protect, listCompanies);
 
 export default router;

@@ -1,75 +1,35 @@
-import mongoose from "mongoose";
-import { connectDB } from "../config/db.js";
-import { env } from "../config/env.js";
 import User from "../models/User.js";
-import Company from "../models/Company.js";
-import Branch from "../models/Branch.js";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+dotenv.config();
 
-(async () => {
+const seedSuperAdmin = async () => {
   try {
-    await connectDB();
+    await mongoose.connect(process.env.MONGODB_URI);
 
-    // seed superadmin
-    const email =
-      process.env.SUPERADMIN_EMAIL || "superadmin@trafficroutes.com";
-    const password = process.env.SUPERADMIN_PASSWORD || "Passw0rd!";
-    const name = process.env.SUPERADMIN_NAME || "Root User";
-
-    let superadmin = await User.findOne({ email });
-    if (!superadmin) {
-      superadmin = await User.create({
-        name,
-        email,
-        password: await bcrypt.hash(password, 10),
-        role: "SUPERADMIN",
-      });
-      console.log("✅ SuperAdmin created:", email);
-    } else {
-      console.log("ℹ️ SuperAdmin exists:", email);
+    const existing = await User.findOne({ role: "SUPERADMIN" });
+    if (existing) {
+      console.log("⚠️ SuperAdmin already exists:", existing.email);
+      process.exit(0);
     }
 
-    // demo company & admin & branch
-    let company = await Company.findOne({ name: "DemoCorp" });
-    if (!company) {
-      company = await Company.create({ name: "DemoCorp" });
-      console.log("✅ Company created: DemoCorp");
-    }
+    const hashedPassword = await bcrypt.hash("superadmin@easygo", 10);
 
-    let admin = await User.findOne({ email: "admin@democorp.com" });
-    if (!admin) {
-      admin = await User.create({
-        name: "Demo Admin",
-        email: "admin@democorp.com",
-        password: await bcrypt.hash("Admin123!", 10),
-        role: "ADMIN",
-        company: company._id,
-      });
-      console.log("✅ Admin created: admin@democorp.com");
-    }
+    const superAdmin = new User({
+      name: "Super Admin",
+      email: "superadmin@easygo.com",
+      password: hashedPassword,
+      role: "SUPERADMIN",
+    });
 
-    let branch = await Branch.findOne({ name: "HQ", company: company._id });
-    if (!branch) {
-      branch = await Branch.create({
-        name: "HQ",
-        address: "Demo Street 1",
-        company: company._id,
-      });
-      console.log("✅ Branch created: HQ");
-    }
-
-    // attach company.admin if you want
-    if (String(company.admin || "") !== String(admin._id)) {
-      company.admin = admin._id;
-      await company.save();
-      console.log("🔗 Company.admin set to Demo Admin");
-    }
-
-    console.log("🎉 Seeding complete");
-    await mongoose.disconnect();
+    await superAdmin.save();
+    console.log("✅ SuperAdmin seeded:", superAdmin.email);
     process.exit(0);
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error("❌ Error seeding SuperAdmin:", err.message);
     process.exit(1);
   }
-})();
+};
+
+seedSuperAdmin();

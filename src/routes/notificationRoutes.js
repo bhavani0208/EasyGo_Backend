@@ -1,6 +1,9 @@
 import { Router } from "express";
 import {
-  createNotification, listMyNotifications, updateNotification, deleteNotification
+  createNotification,
+  listMyNotifications,
+  updateNotification,
+  deleteNotification,
 } from "../controllers/notificationController.js";
 import { requireAuth } from "../middlewares/authMiddleware.js";
 import { requireRoles } from "../middlewares/roleMiddleware.js";
@@ -43,7 +46,12 @@ router.get("/", requireAuth, listMyNotifications);
  *               type: { type: string, enum: [INFO, ALERT, ROUTE_UPDATE] }
  *     responses: { 201: { description: Created } }
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), createNotification);
+router.post(
+  "/",
+  requireAuth,
+  requireRoles("SUPERADMIN", "ADMIN"),
+  createNotification
+);
 
 /**
  * @swagger

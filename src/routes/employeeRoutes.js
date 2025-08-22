@@ -1,96 +1,198 @@
 import { Router } from "express";
 import {
-  createEmployee, listEmployeesByBranch, getEmployee, updateEmployee, deleteEmployee
+  inviteEmployee,
+  registerEmployeeFromInvite,
+  getEmployee,
+  updateEmployeeProfile,
+  updateEmployee,
+  deleteEmployee,
+  listEmployeesByBranch,
 } from "../controllers/employeeController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
-import { requireRoles } from "../middlewares/roleMiddleware.js";
-import { canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
+import { protect, authorize } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
 /**
- * @swagger
- * tags: [Employees]
+ * @openapi
+ * tags:
+ *   - name: Employees
+ *     description: Employee management & self-registration
  */
 
 /**
- * @swagger
- * /employees:
+ * @openapi
+ * /api/employees/invite:
  *   post:
- *     summary: Create employee (SUPERADMIN or Admin of the company)
+ *     summary: Invite an employee (Admin or Superadmin only)
+ *     description: Sends an invitation link to an employee's email.
  *     tags: [Employees]
- *     security: [{ bearerAuth: [] }]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [user, branch]
+ *             required: [email, branchId]
  *             properties:
- *               user: { type: string }
- *               branch: { type: string }
- *               workType: { type: string, enum: [HOME, HYBRID, OFFICE] }
- *               homeLocation: { type: string }
- *     responses: { 201: { description: Created } }
+ *               email: { type: string, example: "employee@example.com" }
+ *               branchId: { type: string, example: "66aaf9d..." }
+ *     responses:
+ *       "200": { description: Invitation sent }
  */
-router.post("/", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), createEmployee);
+router.post(
+  "/invite",
+  protect,
+  authorize(["SUPERADMIN", "ADMIN"]),
+  inviteEmployee
+);
 
 /**
- * @swagger
- * /employees/branch/{branchId}:
- *   get:
- *     summary: List employees by branch (SUPERADMIN or Admin of same company)
+ * @openapi
+ * /api/employees/register/{token}:
+ *   post:
+ *     summary: Employee registration from invite
+ *     description: Employee uses invite token to register with name, password, and address.
  *     tags: [Employees]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: branchId, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: OK } }
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, password, address]
+ *             properties:
+ *               name: { type: string }
+ *               password: { type: string }
+ *               address: { type: string, example: "Madhapur, Hyderabad" }
+ *     responses:
+ *       "201": { description: Employee registered }
  */
-router.get("/branch/:branchId", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), listEmployeesByBranch);
+router.post("/register/:token", registerEmployeeFromInvite);
 
 /**
- * @swagger
- * /employees/{id}:
+ * @openapi
+ * /api/employees/branch/{branchId}:
  *   get:
- *     summary: Get employee (SUPERADMIN, Admin of same company, or the Employee themself)
+ *     summary: List employees by branch (Admin or Superadmin only)
  *     tags: [Employees]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: OK } }
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       "200": { description: OK }
  */
-router.get("/:id", requireAuth, canAccessCompanyOfEntity("employee"), getEmployee);
+router.get(
+  "/branch/:branchId",
+  protect,
+  authorize(["SUPERADMIN", "ADMIN"]),
+  listEmployeesByBranch
+);
 
 /**
- * @swagger
- * /employees/{id}:
+ * @openapi
+ * /api/employees/{id}:
+ *   get:
+ *     summary: Get employee details (self, admin, or superadmin)
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       "200": { description: OK }
+ */
+router.get(
+  "/:id",
+  protect,
+  authorize(["SUPERADMIN", "ADMIN", "EMPLOYEE"]),
+  getEmployee
+);
+
+/**
+ * @openapi
+ * /api/employees/profile:
  *   put:
- *     summary: Update employee (SUPERADMIN, Admin of same company, or the Employee themself - limited fields)
+ *     summary: Update own employee profile
+ *     description: Employees can update their name, address, or work mode.
  *     tags: [Employees]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               address: { type: string }
+ *               workMode: { type: string, enum: [HOME, OFFICE, HYBRID] }
+ *     responses:
+ *       "200": { description: Profile updated }
+ */
+router.put("/profile", protect, authorize(["EMPLOYEE"]), updateEmployeeProfile);
+
+/**
+ * @openapi
+ * /api/employees/{id}:
+ *   put:
+ *     summary: Update employee (Admin or Superadmin)
+ *     tags: [Employees]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               workType: { type: string, enum: [HOME, HYBRID, OFFICE] }
- *               homeLocation: { type: string }
- *               branch: { type: string, description: "Admins/Superadmins only" }
- *     responses: { 200: { description: OK } }
+ *               branch: { type: string }
+ *               workMode: { type: string, enum: [HOME, OFFICE, HYBRID] }
+ *     responses:
+ *       "200": { description: Employee updated }
  */
-router.put("/:id", requireAuth, canAccessCompanyOfEntity("employee"), updateEmployee);
+router.put("/:id", protect, authorize(["SUPERADMIN", "ADMIN"]), updateEmployee);
 
 /**
- * @swagger
- * /employees/{id}:
+ * @openapi
+ * /api/employees/{id}:
  *   delete:
- *     summary: Delete employee (SUPERADMIN or Admin of same company)
+ *     summary: Delete an employee (Admin or Superadmin)
  *     tags: [Employees]
- *     security: [{ bearerAuth: [] }]
- *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
- *     responses: { 200: { description: Deleted } }
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       "200": { description: Employee deleted }
  */
-router.delete("/:id", requireAuth, requireRoles("SUPERADMIN", "ADMIN"), canAccessCompanyOfEntity("employee"), deleteEmployee);
+router.delete(
+  "/:id",
+  protect,
+  authorize(["SUPERADMIN", "ADMIN"]),
+  deleteEmployee
+);
 
 export default router;
