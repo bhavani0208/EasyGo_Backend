@@ -2,6 +2,9 @@ import express from "express";
 import {
   createCompany,
   listCompanies,
+    getCompany,
+  updateCompany,
+  deleteCompany,
 } from "../controllers/companyController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 
@@ -77,5 +80,94 @@ router.post("/", protect, authorize("SUPERADMIN"), createCompany);
  */
 // Anyone logged in can view companies (needed for Admin registration)
 router.get("/", protect, listCompanies);
+
+/**
+ * @swagger
+ * /api/companies/{id}:
+ *   get:
+ *     summary: Get a company by ID
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Company ID
+ *     responses:
+ *       200:
+ *         description: Company details
+ *       404:
+ *         description: Company not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/:id", protect, getCompany);
+
+/**
+ * @swagger
+ * /api/companies/{id}:
+ *   put:
+ *     summary: Update a company (SuperAdmin only)
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Company ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Microsoft
+ *     responses:
+ *       200:
+ *         description: Company updated successfully
+ *       404:
+ *         description: Company not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not SuperAdmin)
+ */
+router.put("/:id", protect, authorize("SUPERADMIN"), updateCompany);
+
+/**
+ * @swagger
+ * /api/companies/{id}:
+ *   delete:
+ *     summary: Delete a company (SuperAdmin only)
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Company ID
+ *     responses:
+ *       200:
+ *         description: Company deleted
+ *       404:
+ *         description: Company not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not SuperAdmin)
+ */
+router.delete("/:id", protect, authorize("SUPERADMIN"), deleteCompany);
 
 export default router;

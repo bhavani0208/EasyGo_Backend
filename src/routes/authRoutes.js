@@ -1,6 +1,6 @@
 import express from "express";
 import { login, registerAdmin } from "../controllers/authController.js";
-//import { selfRegisterAdmin } from "../controllers/authController.js";
+
 const router = express.Router();
 
 /**

@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+
 dotenv.config();
 
 const seedSuperAdmin = async () => {
@@ -14,11 +15,11 @@ const seedSuperAdmin = async () => {
       process.exit(0);
     }
 
-    const hashedPassword = await bcrypt.hash("superadmin@easygo", 10);
+    const hashedPassword = await bcrypt.hash(process.env.SUPERADMIN_PASSWORD, 10);
 
     const superAdmin = new User({
-      name: "Super Admin",
-      email: "superadmin@easygo.com",
+      name: process.env.SUPERADMIN_NAME,
+      email: process.env.SUPERADMIN_EMAIL,
       password: hashedPassword,
       role: "SUPERADMIN",
     });

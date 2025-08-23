@@ -1,9 +1,17 @@
+import mongoose from "mongoose";
 import Branch from "../models/Branch.js";
 
-export const branchRepo = {
-  create: (data) => Branch.create(data),
+ const branchRepo = {
+  create: (branch) => Branch.create(branch),
+
   findById: (id) => Branch.findById(id),
-  findByCompany: (companyId) => Branch.find({ company: companyId }),
-  update: (id, data) => Branch.findByIdAndUpdate(id, data, { new: true }),
+
+  findByCompany: (companyId) =>
+    Branch.find({ company: new mongoose.Types.ObjectId(companyId) }),
+
+  update: (id, update) =>
+    Branch.findByIdAndUpdate(id, update, { new: true }),
+
   remove: (id) => Branch.findByIdAndDelete(id),
 };
+export default branchRepo;

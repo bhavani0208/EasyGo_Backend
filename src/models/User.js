@@ -43,14 +43,19 @@ const userSchema = new mongoose.Schema(
       enum: ["SUPERADMIN", "ADMIN", "EMPLOYEE"],
       required: true,
     },
-    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
-    branch: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
+companyId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Company",
+  required: function() { return this.role === "ADMIN"; }
+},   
+ branch: { type: mongoose.Schema.Types.ObjectId, ref: "Branch" },
     workMode: {
       type: String,
       enum: ["REMOTE", "HYBRID", "OFFICE"],
       default: "OFFICE",
     },
     address: { type: String },
+
   },
   { timestamps: true }
 );

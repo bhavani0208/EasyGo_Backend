@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express from "express";
 import { validate } from "../middlewares/validator.js";
 import { createBranchSchema } from "../validators/schemas.js";
 import {
@@ -9,13 +9,12 @@ import {
   deleteBranch,
 } from "../controllers/branchController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
-import { requireRoles } from "../middlewares/roleMiddleware.js";
 import {
   canAccessCompanyParam,
   canAccessCompanyOfEntity,
 } from "../middlewares/scopeMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
 /**
  * @openapi
@@ -39,25 +38,29 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - address              
  *             properties:
  *               name:
  *                 type: string
- *               location:
+ *                 example: Hyderabad Branch
+ *               address:
  *                 type: string
- *               companyId:
- *                 type: string
+ *                 example: Hyderabad
  *     responses:
  *       "201":
  *         description: Branch created successfully
  *
  */
+
+ 
 router.post(
   "/",
   protect,
-  authorize,
-  requireRoles("SUPERADMIN", "ADMIN"),
-  canAccessCompanyParam,
+  authorize("SUPERADMIN", "ADMIN"),
   validate(createBranchSchema),
+  canAccessCompanyParam,
   createBranch
 );
 
@@ -76,6 +79,7 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *         description: The ID of the company
  *     responses:
  *       "200":
  *         description: List of branches
@@ -84,8 +88,7 @@ router.post(
 router.get(
   "/company/:companyId",
   protect,
-  authorize,
-  requireRoles("SUPERADMIN", "ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   canAccessCompanyParam,
   listBranchesByCompany
 );
@@ -105,16 +108,16 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
+ *         description: Branch ID
  *     responses:
  *       "200":
- *         description: Branch Object
+ *         description: Branch object
  *
  */
 router.get(
   "/:id",
   protect,
-  authorize,
-  requireRoles("SUPERADMIN", "ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   getBranch
 );
@@ -123,7 +126,7 @@ router.get(
  * @openapi
  * /api/branches/{id}:
  *   put:
- *     summary: Update branch by Id
+ *     summary: Update branch by ID
  *     description: SUPERADMIN or Admin of same company.
  *     tags: [Branches]
  *     security:
@@ -134,6 +137,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
+ *         description: Branch ID
  *     requestBody:
  *       required: true
  *       content:
@@ -143,26 +147,27 @@ router.get(
  *             properties:
  *               name:
  *                 type: string
+ *                 example: Updated Branch Name
  *               location:
  *                 type: string
+ *                 example: Updated Location
  *     responses:
  *       "200":
  *         description: Branch updated
+ *
  */
 router.put(
   "/:id",
   protect,
-  authorize,
-  requireRoles("SUPERADMIN", "ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   updateBranch
 );
-
 /**
  * @openapi
  * /api/branches/{id}:
  *   delete:
- *     summary: Delete branch by Id
+ *     summary: Delete branch by ID
  *     description: SUPERADMIN or Admin of same company.
  *     tags: [Branches]
  *     security:
@@ -173,15 +178,16 @@ router.put(
  *         required: true
  *         schema:
  *           type: string
+ *         description: Branch ID
  *     responses:
  *       "200":
  *         description: Branch deleted
+ *
  */
 router.delete(
   "/:id",
   protect,
-  authorize,
-  requireRoles("SUPERADMIN", "ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("branch"),
   deleteBranch
 );

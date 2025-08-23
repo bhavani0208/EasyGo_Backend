@@ -4,7 +4,7 @@ import companyRoutes from "./companyRoutes.js";
 import branchRoutes from "./branchRoutes.js";
 import employeeRoutes from "./employeeRoutes.js";
 import notificationRoutes from "./notificationRoutes.js";
-import invitationRoutes from "./invitationRoutes.js";
+//import invitationRoutes from "./invitationRoutes.js";
 import routesRoutes from "./routesRoutes.js";
 
 const router = Router();
@@ -24,7 +24,7 @@ router.use("/companies", companyRoutes);
 router.use("/branches", branchRoutes);
 router.use("/employees", employeeRoutes);
 router.use("/notifications", notificationRoutes);
-router.use("/invitations", invitationRoutes);
+//router.use("/invitations", invitationRoutes);
 router.use("/routes", routesRoutes);
 
 export default router;

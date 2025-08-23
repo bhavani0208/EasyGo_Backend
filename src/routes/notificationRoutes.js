@@ -1,14 +1,12 @@
-import { Router } from "express";
+import express from "express";
 import {
   createNotification,
   listMyNotifications,
   updateNotification,
   deleteNotification,
 } from "../controllers/notificationController.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
-import { requireRoles } from "../middlewares/roleMiddleware.js";
-
-const router = Router();
+import { protect, authorize } from "../middlewares/authMiddleware.js";
+const router = express.Router();
 
 /**
  * @swagger
@@ -24,7 +22,7 @@ const router = Router();
  *     security: [{ bearerAuth: [] }]
  *     responses: { 200: { description: OK } }
  */
-router.get("/", requireAuth, listMyNotifications);
+router.get("/", protect, authorize, listMyNotifications);
 
 /**
  * @swagger
@@ -48,8 +46,7 @@ router.get("/", requireAuth, listMyNotifications);
  */
 router.post(
   "/",
-  requireAuth,
-  requireRoles("SUPERADMIN", "ADMIN"),
+  protect, authorize("SUPERADMIN", "ADMIN"),
   createNotification
 );
 
@@ -65,7 +62,7 @@ router.post(
  *       content: { application/json: { schema: { type: object, properties: { isRead: { type: boolean } } } } }
  *     responses: { 200: { description: OK } }
  */
-router.put("/:id", requireAuth, updateNotification);
+router.put("/:id", protect, authorize, updateNotification);
 
 /**
  * @swagger
@@ -77,6 +74,6 @@ router.put("/:id", requireAuth, updateNotification);
  *     parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
  *     responses: { 200: { description: Deleted } }
  */
-router.delete("/:id", requireAuth, deleteNotification);
+router.delete("/:id", protect, authorize, deleteNotification);
 
 export default router;

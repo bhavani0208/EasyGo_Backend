@@ -1,13 +1,18 @@
 import { companyRepo } from "../repositories/companyRepo.js";
-import { branchRepo } from "../repositories/branchRepo.js";
+import branchRepo from "../repositories/branchRepo.js";
 import { employeeRepo } from "../repositories/employeeRepo.js";
 
 export async function canAccessCompanyParam(req, res, next) {
   if (req.user.role === "SUPERADMIN") return next();
 
-  const targetCompanyId =
-    req.params.companyId || req.params.id || req.body.company;
-  if (!targetCompanyId)
+  let targetCompanyId =
+  req.params.companyId || req.params.id || req.body.company || req.body.companyId;
+
+// if ADMIN → default to their own companyId
+if (req.user.role === "ADMIN" && !targetCompanyId) {
+  targetCompanyId = req.user.companyId;
+}
+if (!targetCompanyId)
     return res.status(400).json({ message: "company id required" });
 
   if (

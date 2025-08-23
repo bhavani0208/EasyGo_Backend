@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express from "express";
 import {
   inviteEmployee,
   registerEmployeeFromInvite,
@@ -9,8 +9,10 @@ import {
   listEmployeesByBranch,
 } from "../controllers/employeeController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
+import { validate } from "../middlewares/validator.js";
 
-const router = Router();
+import { inviteCreateSchema,inviteAcceptSchema } from "../validators/schemas.js";
+const router = express.Router();
 
 /**
  * @openapi
@@ -24,7 +26,6 @@ const router = Router();
  * /api/employees/invite:
  *   post:
  *     summary: Invite an employee (Admin or Superadmin only)
- *     description: Sends an invitation link to an employee's email.
  *     tags: [Employees]
  *     security:
  *       - bearerAuth: []
@@ -37,14 +38,17 @@ const router = Router();
  *             required: [email, branchId]
  *             properties:
  *               email: { type: string, example: "employee@example.com" }
- *               branchId: { type: string, example: "66aaf9d..." }
+ *               branchId: { type: string, example: "66aaf9d1234567890abcde12" }
+ *               workType: { type: string, enum: [HOME, OFFICE, HYBRID], example: "HYBRID" }
+ *               homeLocation: { type: string, example: "Madhapur, Hyderabad" }
  *     responses:
  *       "200": { description: Invitation sent }
  */
 router.post(
   "/invite",
   protect,
-  authorize(["SUPERADMIN", "ADMIN"]),
+  authorize("SUPERADMIN","ADMIN"),
+  validate(inviteCreateSchema),
   inviteEmployee
 );
 
@@ -53,7 +57,6 @@ router.post(
  * /api/employees/register/{token}:
  *   post:
  *     summary: Employee registration from invite
- *     description: Employee uses invite token to register with name, password, and address.
  *     tags: [Employees]
  *     parameters:
  *       - in: path
@@ -68,13 +71,13 @@ router.post(
  *             type: object
  *             required: [name, password, address]
  *             properties:
- *               name: { type: string }
- *               password: { type: string }
+ *               name: { type: string, example: "John Doe" }
+ *               password: { type: string, example: "securePass123" }
  *               address: { type: string, example: "Madhapur, Hyderabad" }
  *     responses:
  *       "201": { description: Employee registered }
  */
-router.post("/register/:token", registerEmployeeFromInvite);
+router.post("/register/:token",validate(inviteAcceptSchema), registerEmployeeFromInvite);
 
 /**
  * @openapi
@@ -95,7 +98,7 @@ router.post("/register/:token", registerEmployeeFromInvite);
 router.get(
   "/branch/:branchId",
   protect,
-  authorize(["SUPERADMIN", "ADMIN"]),
+  authorize("SUPERADMIN","ADMIN"),
   listEmployeesByBranch
 );
 
@@ -118,7 +121,7 @@ router.get(
 router.get(
   "/:id",
   protect,
-  authorize(["SUPERADMIN", "ADMIN", "EMPLOYEE"]),
+  authorize("SUPERADMIN", "ADMIN", "EMPLOYEE"),
   getEmployee
 );
 
@@ -144,7 +147,7 @@ router.get(
  *     responses:
  *       "200": { description: Profile updated }
  */
-router.put("/profile", protect, authorize(["EMPLOYEE"]), updateEmployeeProfile);
+router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
 
 /**
  * @openapi
@@ -170,7 +173,7 @@ router.put("/profile", protect, authorize(["EMPLOYEE"]), updateEmployeeProfile);
  *     responses:
  *       "200": { description: Employee updated }
  */
-router.put("/:id", protect, authorize(["SUPERADMIN", "ADMIN"]), updateEmployee);
+router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"), updateEmployee);
 
 /**
  * @openapi
@@ -191,8 +194,11 @@ router.put("/:id", protect, authorize(["SUPERADMIN", "ADMIN"]), updateEmployee);
 router.delete(
   "/:id",
   protect,
-  authorize(["SUPERADMIN", "ADMIN"]),
+  authorize("SUPERADMIN", "ADMIN"),
   deleteEmployee
 );
+
+//router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
+
 
 export default router;

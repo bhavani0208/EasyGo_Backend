@@ -9,6 +9,14 @@ export const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
+
+    if (req.user.role === "ADMIN" && !req.user.companyId) {
+      return res.status(400).json({ message: "ADMIN user missing companyId" });
+    }
+//     if (req.user.role === "ADMIN" && !req.user.company) {
+//   return res.status(400).json({ message: "ADMIN user missing company" });
+// }
+
     next();
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });

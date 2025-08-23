@@ -1,14 +1,12 @@
-import { Router } from "express";
-import { requireAuth } from "../middlewares/authMiddleware.js";
-import { requireRoles } from "../middlewares/roleMiddleware.js";
+import express from "express";
 import { canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
 import { validate } from "../middlewares/validator.js";
 import { routeByCoordsSchema, routeForEmployeeSchema } from "../validators/routeSchemas.js";
 import { getRouteByCoords, getRouteForEmployee } from "../controllers/routesController.js";
 import { notifyEmployeeRoute } from "../controllers/routesController.js";
 import { routeNotifySchema } from "../validators/routeSchemas.js";
-
-const router = Router();
+import { protect, authorize } from "../middlewares/authMiddleware.js";
+const router = express.Router();
 
 /**
  * @swagger
@@ -45,7 +43,7 @@ const router = Router();
  */
 router.post(
   "/coords",
-  requireAuth,
+  protect, authorize,
   validate(routeByCoordsSchema),
   getRouteByCoords
 );
@@ -73,9 +71,7 @@ router.post(
  */
 router.get(
   "/employee/:employeeId",
-  requireAuth,
-  // SUPERADMIN always ok; ADMIN only if employee belongs to their company; EMPLOYEE only if self (handled indirectly by scopeMiddleware due to employee->branch->company)
-  requireRoles("SUPERADMIN", "ADMIN", "EMPLOYEE"),
+    protect, authorize("SUPERADMIN", "ADMIN", "EMPLOYEE"),
   canAccessCompanyOfEntity("employee"),
   validate(routeForEmployeeSchema),
   getRouteForEmployee
@@ -104,8 +100,7 @@ router.get(
  */
 router.post(
   "/employee/:employeeId/notify",
-  requireAuth,
-  requireRoles("SUPERADMIN", "ADMIN"), // only admins trigger
+  protect, authorize("SUPERADMIN", "ADMIN"), // only admins trigger
   canAccessCompanyOfEntity("employee"),
   validate(routeNotifySchema),
   notifyEmployeeRoute

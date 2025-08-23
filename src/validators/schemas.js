@@ -8,39 +8,32 @@ export const createBranchSchema = {
   body: z.object({
     name: z.string().min(2),
     address: z.string().optional(),
-    company: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company id"),
-    location: z
-      .object({
+    companyId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company id").optional(), // ✅ accept companyId
+    location: z.union([
+      z.string(),  // ✅ human readable address
+      z.object({
         type: z.literal("Point").default("Point"),
         coordinates: z.tuple([
-          z.number().gte(-180).lte(180), // lng
-          z.number().gte(-90).lte(90), // lat
+          z.number().gte(-180).lte(180), // longitude
+          z.number().gte(-90).lte(90),   // latitude
         ]),
-      })
-      .optional(),
+      }),
+    ]).optional(),
   }),
 };
 
 export const inviteCreateSchema = {
-  body: z
-    .object({
-      email: z.string().email(),
-      role: z.enum(["ADMIN", "EMPLOYEE"]),
-      company: z.string().regex(/^[a-f0-9]{24}$/i),
-      branch: z
-        .string()
-        .regex(/^[a-f0-9]{24}$/i)
-        .optional(),
-      frontendUrl: z.string().url().optional(),
-    })
-    .refine((d) => d.role !== "EMPLOYEE" || !!d.branch, {
-      message: "branch required for EMPLOYEE",
-    }),
+  body: z.object({
+    email: z.string().email(),
+    branchId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid branch id"),
+    workType: z.enum(["OFFICE", "HYBRID", "REMOTE"]),
+    homeLocation: z.string().optional(),
+  }),
 };
 
 export const inviteAcceptSchema = {
   body: z.object({
-    token: z.string().min(10),
+    
     name: z.string().min(2).optional(),
     password: z.string().min(6),
     homeLocation: z.string().optional(),

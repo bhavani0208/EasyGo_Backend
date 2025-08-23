@@ -1,18 +1,28 @@
-import { branchRepo } from "../repositories/branchRepo.js";
+import branchRepo from "../repositories/branchRepo.js";
 import { geocodeAddress } from "../utils/geocode.js";
 
 export const branchService = {
   async create(data) {
-    let coordinates = data?.location?.coordinates;
+    // 🔹 Map companyId → company (schema requires `company`)
+    if (data.companyId) {
+      data.company = data.companyId;
+      delete data.companyId;
+    }
 
-    // if no coordinates given but address exists → geocode
-    if ((!coordinates || coordinates.length !== 2) && data.address) {
+    // 🔹 If location is passed as a string, treat it as `address`
+    if (typeof data.location === "string") {
+      data.address = data.location;
+      delete data.location;
+    }
+
+    // 🔹 If no coordinates but address exists → geocode
+    if ((!data.location || !data.location.coordinates) && data.address) {
       const geo = await geocodeAddress(data.address);
-      console.log("📍 Geocoded:", data.address, "=>", geo); // Debug log
+      console.log("📍 Geocoded:", data.address, "=>", geo);
       if (geo) {
         data.location = { type: "Point", coordinates: geo };
       } else {
-        delete data.location; // ✅ prevent invalid Point
+        delete data.location; // prevent invalid Point
       }
     }
 
@@ -20,17 +30,22 @@ export const branchService = {
   },
 
   listByCompany: (companyId) => branchRepo.findByCompany(companyId),
-  // async listBranches(user) {
-  //   let filter = {};
-  //   if (user.role === "ADMIN") {
-  //     filter.company = user.company;
-  //   }
-  //   return await branchRepo.find(filter);
-  // },
 
   get: (id) => branchRepo.findById(id),
 
   async update(id, data) {
+    // 🔹 Handle `companyId` mapping (in case update sends it)
+    if (data.companyId) {
+      data.company = data.companyId;
+      delete data.companyId;
+    }
+
+    // 🔹 Handle `location` string as address
+    if (typeof data.location === "string") {
+      data.address = data.location;
+      delete data.location;
+    }
+
     if (data.address && (!data.location || !data.location.coordinates)) {
       const geo = await geocodeAddress(data.address);
       console.log("📍 Updated Geocode:", data.address, "=>", geo);
@@ -49,14 +64,4 @@ export const branchService = {
   },
 
   remove: (id) => branchRepo.remove(id),
-  // async deleteBranch(branchId, user) {
-  //   const branch = await branchRepo.findById(branchId);
-  //   if (!branch) throw new Error("Branch not found");
-
-  //   if (user.role === "ADMIN" && String(branch.company._id) !== String(user.company)) {
-  //     throw new Error("Unauthorized");
-  //   }
-
-  //   return await branch.deleteOne();
-  // }
 };
