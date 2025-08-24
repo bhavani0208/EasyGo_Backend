@@ -8,6 +8,9 @@ export const employeeService = {
 
     const employeeData = {
       ...data,
+        officeStartTime: data.officeStartTime,
+    officeEndTime: data.officeEndTime,
+    workDays: data.workDays || ["Mon", "Tue", "Wed", "Thu", "Fri"],
       location: {
         type: "Point",
         coordinates: coordinates || [0, 0], // fallback

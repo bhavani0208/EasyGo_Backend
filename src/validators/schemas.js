@@ -28,6 +28,12 @@ export const inviteCreateSchema = {
     branchId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid branch id"),
     workType: z.enum(["OFFICE", "HYBRID", "REMOTE"]),
     homeLocation: z.string().optional(),
+    officeTimings: z
+      .object({
+        start: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)"),
+        end: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)"),
+      })
+      .optional(),
   }),
 };
 
@@ -37,5 +43,21 @@ export const inviteAcceptSchema = {
     name: z.string().min(2).optional(),
     password: z.string().min(6),
     homeLocation: z.string().optional(),
+  }),
+};
+export const updateEmployeeSchema = {
+  body: z.object({
+    branch: z.string().regex(/^[a-f0-9]{24}$/i).optional(),
+    workMode: z.enum(["OFFICE", "HYBRID", "REMOTE"]).optional(),
+    officeTimings: z
+      .object({
+        start: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+        end: z
+          .string()
+          .regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+      })
+      .optional(),
   }),
 };

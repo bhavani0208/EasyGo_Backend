@@ -47,12 +47,23 @@ export const getEmployee = async (req, res, next) => {
 // ========== Update/Delete Employee ==========
 export const updateEmployee = async (req, res, next) => {
   try {
-    const { branch, workMode } = req.body;
+    const { branch, workMode,officeStartTime, officeEndTime } = req.body;
     const employee = await Employee.findById(req.params.id);
     if (!employee) return res.status(404).json({ message: "Employee not found" });
 
     if (branch) employee.branch = branch;
     if (workMode) employee.workMode = workMode;
+     if (officeStartTime) employee.officeStartTime = officeStartTime;
+    if (officeEndTime) employee.officeEndTime = officeEndTime;
+
+    // optional: ensure start < end
+    if (employee.officeStartTime && employee.officeEndTime) {
+      if (employee.officeStartTime >= employee.officeEndTime) {
+        return res.status(400).json({
+          message: "officeEndTime must be later than officeStartTime",
+        });
+      }
+    }
     await employee.save();
 
     res.json({ message: "Employee updated", employee });
@@ -191,7 +202,7 @@ export const registerEmployeeFromInvite = async (req, res, next) => {
 
 export const updateEmployeeProfile = async (req, res, next) => {
   try {
-    const { name, address, workMode } = req.body;
+    const { name, address, workMode, officeStartTime, officeEndTime } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -204,6 +215,17 @@ export const updateEmployeeProfile = async (req, res, next) => {
 
     if (address) employee.address = address;
     if (workMode) employee.workMode = workMode;
+
+    if (officeStartTime) employee.officeStartTime = officeStartTime;
+    if (officeEndTime) employee.officeEndTime = officeEndTime;
+
+    if (employee.officeStartTime && employee.officeEndTime) {
+      if (employee.officeStartTime >= employee.officeEndTime) {
+        return res.status(400).json({
+          message: "officeEndTime must be later than officeStartTime",
+        });
+      }
+    }
     await employee.save();
 
     res.json({ message: "Profile updated", user, employee });

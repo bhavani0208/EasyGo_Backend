@@ -29,6 +29,15 @@ const employeeSchema = new mongoose.Schema(
       ref: "Branch",
       required: true,
     },
+   officeStartTime: {
+      type: String,
+      match: [/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format, use HH:mm"],
+    },
+    officeEndTime: {
+      type: String,
+      match: [/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format, use HH:mm"],
+    },
+    workDays: [{ type: String }],
   },
   { timestamps: true }
 );

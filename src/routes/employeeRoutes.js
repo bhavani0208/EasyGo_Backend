@@ -11,7 +11,7 @@ import {
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validator.js";
 
-import { inviteCreateSchema,inviteAcceptSchema } from "../validators/schemas.js";
+import { inviteCreateSchema,inviteAcceptSchema,updateEmployeeSchema } from "../validators/schemas.js";
 const router = express.Router();
 
 /**
@@ -169,10 +169,21 @@ router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
  *             properties:
  *               branch: { type: string }
  *               workMode: { type: string, enum: [HOME, OFFICE, HYBRID] }
+ *             officeTimings:
+ *                 type: object
+ *                 properties:
+ *                   start:
+ *                     type: string
+ *                     description: Office start time (HH:mm, 24hr)
+ *                     example: "09:00"
+ *                   end:
+ *                     type: string
+ *                     description: Office end time (HH:mm, 24hr)
+ *                     example: "18:00"  
  *     responses:
  *       "200": { description: Employee updated }
  */
-router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"), updateEmployee);
+router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"),validate(updateEmployeeSchema),   updateEmployee);
 
 /**
  * @openapi
