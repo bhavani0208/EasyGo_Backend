@@ -18,7 +18,7 @@ export const authService = {
       email,
       password: hashed,
       role,
-      company,
+      companyId,
       branch,
     });
   },
@@ -34,7 +34,7 @@ export const authService = {
       {
         id: user._id,
         role: user.role,
-        companyId: user.company || null,
+        companyId: user.companyId|| null,
         branchId: user.branch || null,
       },
       env.JWT_SECRET,
@@ -78,9 +78,10 @@ export const authService = {
       {
         id: user._id,
         role: user.role,
-        companyId: user.company,
+        companyId: user.companyId,
+        
       },
-      env.JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
@@ -92,7 +93,7 @@ export const authService = {
         name: user.name,
         email: user.email,
         role: user.role,
-        company: user.company,
+        companyId: user.companyId,
       },
     };
   },

@@ -5,5 +5,5 @@ export const userRepo = {
   findByEmail: (email) => User.findOne({ email }),
   findById: (id) => User.findById(id),
   findAdminsByCompany: (companyId) =>
-    User.find({ company: companyId, role: "ADMIN" }),
+    User.find({ companyId, role: "ADMIN" }),
 };

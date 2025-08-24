@@ -80,7 +80,7 @@ export const registerAdmin = async (req, res) => {
       email,
       password: hashedPassword,
       role: "ADMIN",
-      company: company._id,
+      companyId: company._id,
     });
 
     res.status(201).json({ message: "Admin registered successfully", admin });

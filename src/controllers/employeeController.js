@@ -116,7 +116,7 @@ export const inviteEmployee = async (req, res, next) => {
       email: user.email,
       password: user.password,
       workMode: workType || "OFFICE",
-      address: homeLocation || "Not Provided",
+      //address: homeLocation || "Not Provided",
       company: companyId,
       branch: branchId,
     });
@@ -162,6 +162,10 @@ export const registerEmployeeFromInvite = async (req, res, next) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired invite" });
+    }
+
+    if (user.password !== "temp") {
+      return res.status(400).json({ message: "User already registered" });
     }
 
     user.name = name;

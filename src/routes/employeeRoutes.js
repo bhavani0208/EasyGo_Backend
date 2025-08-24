@@ -40,7 +40,6 @@ const router = express.Router();
  *               email: { type: string, example: "employee@example.com" }
  *               branchId: { type: string, example: "66aaf9d1234567890abcde12" }
  *               workType: { type: string, enum: [HOME, OFFICE, HYBRID], example: "HYBRID" }
- *               homeLocation: { type: string, example: "Madhapur, Hyderabad" }
  *     responses:
  *       "200": { description: Invitation sent }
  */

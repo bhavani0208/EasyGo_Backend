@@ -9,15 +9,15 @@ import routesRoutes from "./routesRoutes.js";
 
 const router = Router();
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check
- *     tags: [System]
- *     responses: { 200: { description: OK } }
- */
-router.get("/health", (req, res) => res.json({ ok: true }));
+// /**
+//  * @swagger
+//  * /health:
+//  *   get:
+//  *     summary: Health check
+//  *     tags: [System]
+//  *     responses: { 200: { description: OK } }
+//  */
+// router.get("/health", (req, res) => res.json({ ok: true }));
 
 router.use("/auth", authRoutes);
 router.use("/companies", companyRoutes);
