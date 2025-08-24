@@ -183,7 +183,7 @@ router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
  *     responses:
  *       "200": { description: Employee updated }
  */
-router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"),validate(updateEmployeeSchema),   updateEmployee);
+router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"),validate(updateEmployeeSchema),updateEmployee);
 
 /**
  * @openapi

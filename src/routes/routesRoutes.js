@@ -1,23 +1,32 @@
 import express from "express";
 import { canAccessCompanyOfEntity } from "../middlewares/scopeMiddleware.js";
 import { validate } from "../middlewares/validator.js";
-import { routeByCoordsSchema, routeForEmployeeSchema } from "../validators/routeSchemas.js";
-import { getRouteByCoords, getRouteForEmployee } from "../controllers/routesController.js";
-import { notifyEmployeeRoute } from "../controllers/routesController.js";
-import { routeNotifySchema } from "../validators/routeSchemas.js";
+import {
+  routeByCoordsSchema,
+  routeForEmployeeSchema,
+  routeNotifySchema,
+} from "../validators/routeSchemas.js";
+import {
+  getRouteByCoords,
+  getRouteForEmployee,
+  notifyEmployeeRoute,
+} from "../controllers/routesController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
+
 const router = express.Router();
 
 /**
  * @swagger
- * tags: [Routes]
+ * tags:
+ *   - name: Routes
+ *     description: Best route computation using OpenRouteService
  */
 
 /**
  * @swagger
- * /routes/coords:
+ * /routes/by-coords:
  *   post:
- *     summary: Get route between two coordinates (authenticated)
+ *     summary: Get best route between two coordinates
  *     tags: [Routes]
  *     security: [{ bearerAuth: [] }]
  *     requestBody:
@@ -26,24 +35,19 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [start, end]
  *             properties:
- *               start:
- *                 type: object
- *                 properties: { lat: { type: number }, lng: { type: number } }
- *               end:
- *                 type: object
- *                 properties: { lat: { type: number }, lng: { type: number } }
+ *               start: { type: object, properties: { lat: {type: number}, lng: {type: number} }, required: [lat,lng] }
+ *               end:   { type: object, properties: { lat: {type: number}, lng: {type: number} }, required: [lat,lng] }
  *               profile:
  *                 type: string
  *                 enum: [driving-car, driving-hgv, foot-walking, cycling-regular]
  *     responses:
  *       200:
- *         description: Route result
+ *         description: Route with distance/duration
  */
 router.post(
-  "/coords",
-  protect, authorize,
+  "/by-coords",
+  protect,
   validate(routeByCoordsSchema),
   getRouteByCoords
 );
@@ -52,7 +56,7 @@ router.post(
  * @swagger
  * /routes/employee/{employeeId}:
  *   get:
- *     summary: Get route for an employee (home -> branch)
+ *     summary: Get best route from employee home to office
  *     tags: [Routes]
  *     security: [{ bearerAuth: [] }]
  *     parameters:
@@ -67,11 +71,12 @@ router.post(
  *           enum: [driving-car, driving-hgv, foot-walking, cycling-regular]
  *     responses:
  *       200:
- *         description: Route result
+ *         description: Route with distance/duration
  */
 router.get(
   "/employee/:employeeId",
-    protect, authorize("SUPERADMIN", "ADMIN", "EMPLOYEE"),
+  protect,
+  authorize("SUPERADMIN", "ADMIN", "EMPLOYEE"),
   canAccessCompanyOfEntity("employee"),
   validate(routeForEmployeeSchema),
   getRouteForEmployee
@@ -81,7 +86,7 @@ router.get(
  * @swagger
  * /routes/employee/{employeeId}/notify:
  *   post:
- *     summary: Generate route and notify the employee
+ *     summary: Compute route and send a ROUTE_UPDATE notification to the employee’s user
  *     tags: [Routes]
  *     security: [{ bearerAuth: [] }]
  *     parameters:
@@ -100,11 +105,11 @@ router.get(
  */
 router.post(
   "/employee/:employeeId/notify",
-  protect, authorize("SUPERADMIN", "ADMIN"), // only admins trigger
+  protect,
+  authorize("SUPERADMIN", "ADMIN"),
   canAccessCompanyOfEntity("employee"),
   validate(routeNotifySchema),
   notifyEmployeeRoute
 );
-
 
 export default router;

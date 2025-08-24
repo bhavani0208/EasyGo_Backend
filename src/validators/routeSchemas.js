@@ -18,7 +18,7 @@ export const routeByCoordsSchema = {
 
 export const routeForEmployeeSchema = {
   params: z.object({
-    employeeId: z.string().regex(/^[a-f0-9]{24}$/i),
+    employeeId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid employee id"),
   }),
   query: z
     .object({
@@ -26,9 +26,10 @@ export const routeForEmployeeSchema = {
     })
     .optional(),
 };
+
 export const routeNotifySchema = {
   params: z.object({
-    employeeId: z.string().regex(/^[a-f0-9]{24}$/i),
+    employeeId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid employee id"),
   }),
   query: z
     .object({

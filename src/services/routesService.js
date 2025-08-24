@@ -5,54 +5,70 @@ import { employeeRepo } from "../repositories/employeeRepo.js";
 import { notificationService } from "./notificationService.js";
 
 const ORS_BASE = "https://api.openrouteservice.org/v2/directions";
+const DEFAULT_PROFILE = "driving-car";
 
-function coordsToQuery(lng, lat) {
-  if (typeof lng !== "number" || typeof lat !== "number") {
+
+
+function toMinutes(seconds) {
+  return Math.round((seconds || 0) / 60);
+}
+
+function normalizeORS(json) {
+  const route = json?.routes?.[0];
+  if (!route) {
+    throw Object.assign(new Error("No route found"), { status: 404 });
+  }
+  const distanceKm = +(route.summary?.distance || 0) / 1000;
+  const durationMin = toMinutes(route.summary?.duration || 0);
+
+  return {
+    distanceKm: +distanceKm.toFixed(2),
+    durationMin,
+    geometry: route.geometry || null, // polyline
+    raw: json,
+  };
+}
+
+function coordsToQuery([lng, lat]) {
+  if (
+    !Array.isArray([lng, lat]) ||
+    typeof lng !== "number" ||
+    typeof lat !== "number"
+  ) {
     throw Object.assign(new Error("Invalid coordinates"), { status: 400 });
   }
   return `${lng},${lat}`;
 }
 
 export const routesService = {
-  /**
-   * Generic route by coordinates
-   * @param {{lng:number,lat:number}} start
-   * @param {{lng:number,lat:number}} end
-   * @param {"driving-car"|"driving-hgv"|"foot-walking"|"cycling-regular"} profile
-   */
-  async getByCoords(start, end, profile = "driving-car") {
-    if (!env.ORS_API_KEY)
-      throw Object.assign(new Error("ORS_API_KEY missing"), { status: 500 });
+  
+  async getByCoords(start, end, profile = DEFAULT_PROFILE) {
+    if (!start?.lat || !start?.lng || !end?.lat || !end?.lng) {
+      throw Object.assign(new Error("start/end are required"), { status: 400 });
+    }
 
-    const url =
-      `${ORS_BASE}/${profile}?api_key=${encodeURIComponent(env.ORS_API_KEY)}` +
-      `&start=${coordsToQuery(start.lng, start.lat)}&end=${coordsToQuery(end.lng, end.lat)}`;
+    const url = `${ORS_BASE}/${encodeURIComponent(
+      profile
+    )}?api_key=${encodeURIComponent(
+      process.env.ORS_API_KEY
+    )}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
 
     const { data } = await axios.get(url, { timeout: 15000 });
-
-    // shape a compact summary
-    const feat = data?.features?.[0];
-    const summary = feat?.properties?.summary || {};
-    return {
-      provider: "openrouteservice",
-      profile,
-      distance_m: summary.distance,
-      duration_s: summary.duration,
-      geometry: feat?.geometry, // GeoJSON LineString
-      raw: data, // keep full payload for map rendering if needed
-    };
+    return normalizeORS(data);
   },
+
 
   /**
    * Route from Employee.homeLocation -> Employee.branch.location
    */
-  async getForEmployee(employeeId, profile = "driving-car") {
-    const emp = await employeeRepo.findById(employeeId); // populates user and branch
-    if (!emp)
+  async getForEmployee(employeeId, profile = DEFAULT_PROFILE) {
+    const emp = await employeeRepo.findById(employeeId);
+    if (!emp) {
       throw Object.assign(new Error("Employee not found"), { status: 404 });
+    }
 
-    const home = emp.homeLocation?.coordinates;
-    const office = emp.branch?.location?.coordinates;
+    const home = emp.location?.coordinates; // [lng, lat]
+    const office = emp.branch?.location?.coordinates; // [lng, lat]
 
     if (!home || home.length !== 2) {
       throw Object.assign(
@@ -66,34 +82,65 @@ export const routesService = {
       });
     }
 
-    const [homeLng, homeLat] = home;
-    const [offLng, offLat] = office;
-
-    return this.getByCoords(
-      { lng: homeLng, lat: homeLat },
-      { lng: offLng, lat: offLat },
+    const url = `${ORS_BASE}/${encodeURIComponent(
       profile
-    );
+    )}?api_key=${encodeURIComponent(
+      process.env.ORS_API_KEY
+    )}&start=${coordsToQuery(home)}&end=${coordsToQuery(office)}`;
+
+    const { data } = await axios.get(url, { timeout: 15000 });
+    const normalized = normalizeORS(data);
+
+    // Attach some useful context
+    return {
+      ...normalized,
+      employee: {
+        id: emp._id,
+        name: emp.name,
+        email: emp.email,
+        officeStartTime: emp.officeStartTime || null,
+        officeEndTime: emp.officeEndTime || null,
+      },
+      branch: {
+        id: emp.branch?._id || null,
+        name: emp.branch?.name || null,
+      },
+    };
   },
-  async notifyEmployeeRoute(employeeId, profile = "driving-car") {
-    const route = await this.getForEmployee(employeeId, profile);
+  async notifyEmployeeRoute(employeeId, profile = DEFAULT_PROFILE) {
+    const result = await this.getForEmployee(employeeId, profile);
 
-    const minutes = Math.round((route.duration_s || 0) / 60);
-    const km = (route.distance_m / 1000).toFixed(1);
+    const message = `Best route: ${result.distanceKm} km (~${result.durationMin} min)${
+      result.employee?.officeStartTime
+        ? `; office starts at ${result.employee.officeStartTime}`
+        : ""
+    }`;
 
-    const message = `Your commute is about ${minutes} min (${km} km) by ${profile.replace("-", " ")}`;
-
-    // send notification
+    // NOTE: employeeRepo.findById populates 'user'
     const emp = await employeeRepo.findById(employeeId);
-    if (!emp)
+    if (!emp) {
       throw Object.assign(new Error("Employee not found"), { status: 404 });
+    }
 
-    await notificationsService.create({
-      user: emp.user,
-      type: "ROUTE_ALERT",
+    // Store both human-friendly message and machine-readable payload
+    await notificationService.create(
+      emp.user, // user id
       message,
-    });
+      "ROUTE_UPDATE",
+      {
+        employeeId,
+        branchId: emp.branch?._id || null,
+        profile,
+        distanceKm: result.distanceKm,
+        durationMin: result.durationMin,
+        geometry: result.geometry, // polyline string
+        generatedAt: new Date().toISOString(),
+      }
+    );
 
-    return { message, route };
+    return {
+      message: "Route computed and notification created",
+      route: result,
+    };
   },
 };

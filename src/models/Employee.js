@@ -13,7 +13,7 @@ const employeeSchema = new mongoose.Schema(
       default: "OFFICE",
     },
 
-    address: { type: String, required: true }, // employee home address
+    address: { type: String,require:false }, // employee home address
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], default: [0, 0] }, // [lon, lat]

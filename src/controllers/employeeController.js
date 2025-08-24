@@ -34,9 +34,9 @@ export const listEmployeesByBranch = async (req, res, next) => {
 // ========== Get Single Employee ==========
 export const getEmployee = async (req, res, next) => {
   try {
-    const employee = await Employee.findOne({ user: req.params.id })
+    const employee = await Employee.findOne({ user: req.params.id });
       
-      .populate("branch");
+     // .populate("branch");
     if (!employee) return res.status(404).json({ message: "Employee not found" });
     res.json(employee);
   } catch (err) {
@@ -130,6 +130,7 @@ export const inviteEmployee = async (req, res, next) => {
       //address: homeLocation || "Not Provided",
       company: companyId,
       branch: branchId,
+      user: user._id,
     });
     await employee.save();
 

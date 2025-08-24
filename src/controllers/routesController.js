@@ -12,14 +12,24 @@ export const getRouteByCoords = async (req, res, next) => {
 export const getRouteForEmployee = async (req, res, next) => {
   try {
     const { profile } = req.query;
-    const result = await routesService.getForEmployee(req.params.employeeId, profile);
+    const result = await routesService.getForEmployee(
+      req.params.employeeId,
+      profile
+    );
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 export const notifyEmployeeRoute = async (req, res, next) => {
   try {
     const { profile } = req.query;
-    const result = await routesService.notifyEmployeeRoute(req.params.employeeId, profile);
+    const result = await routesService.notifyEmployeeRoute(
+      req.params.employeeId,
+      profile
+    );
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };

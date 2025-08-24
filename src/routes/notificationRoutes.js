@@ -22,7 +22,7 @@ const router = express.Router();
  *     security: [{ bearerAuth: [] }]
  *     responses: { 200: { description: OK } }
  */
-router.get("/", protect, authorize, listMyNotifications);
+router.get("/", protect, listMyNotifications);
 
 /**
  * @swagger
