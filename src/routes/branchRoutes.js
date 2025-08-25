@@ -7,6 +7,7 @@ import {
   getBranch,
   updateBranch,
   deleteBranch,
+  listBranches,
 } from "../controllers/branchController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import {
@@ -40,7 +41,7 @@ const router = express.Router();
  *             type: object
  *             required:
  *               - name
- *               - address              
+ *               - address
  *             properties:
  *               name:
  *                 type: string
@@ -54,7 +55,6 @@ const router = express.Router();
  *
  */
 
- 
 router.post(
   "/",
   protect,
@@ -63,6 +63,36 @@ router.post(
   canAccessCompanyParam,
   createBranch
 );
+
+/**
+ * @swagger
+ * /api/branches:
+ *   get:
+ *     summary: List all branches
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of branches
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 64e12a6bc1234ab567890def
+ *                   name:
+ *                     type: string
+ *                     example: Kondapur
+ *       401:
+ *         description: Unauthorized
+ */
+// Anyone logged in can view companies (needed for Admin registration)
+router.get("/", listBranches);
 
 /**
  * @openapi

@@ -62,6 +62,6 @@ export const branchService = {
 
     return branchRepo.update(id, data);
   },
-
+  list: () => branchRepo.findAll(),
   remove: (id) => branchRepo.remove(id),
 };

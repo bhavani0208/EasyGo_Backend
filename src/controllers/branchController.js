@@ -12,7 +12,9 @@ export const createBranch = async (req, res, next) => {
 
     // If SUPERADMIN → require companyId in request
     if (req.user.role === "SUPERADMIN" && !payload.companyId) {
-      return res.status(400).json({ message: "companyId is required for SUPERADMIN" });
+      return res
+        .status(400)
+        .json({ message: "companyId is required for SUPERADMIN" });
     }
 
     // Convert companyId → ObjectId and move to company field
@@ -30,6 +32,26 @@ export const createBranch = async (req, res, next) => {
     res.status(201).json(branch);
   } catch (err) {
     console.error("❌ Branch creation error:", err);
+    next(err);
+  }
+};
+
+export const listBranches = async (req, res, next) => {
+  try {
+    let branches;
+
+    if (req.user.role === "ADMIN") {
+      // ✅ Only branches for this admin's company
+      branches = await branchService.listByCompany(req.user.companyId);
+    } else if (req.user.role === "SUPERADMIN") {
+      // ✅ If SUPERADMIN → return all (or filter if companyId passed in query)
+      branches = await branchService.list();
+    } else {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    res.json(branches);
+  } catch (err) {
     next(err);
   }
 };
