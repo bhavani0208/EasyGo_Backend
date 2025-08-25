@@ -79,7 +79,7 @@ router.post("/", protect, authorize("SUPERADMIN"), createCompany);
  *         description: Unauthorized
  */
 // Anyone logged in can view companies (needed for Admin registration)
-router.get("/", protect, listCompanies);
+router.get("/", listCompanies);
 
 /**
  * @swagger
