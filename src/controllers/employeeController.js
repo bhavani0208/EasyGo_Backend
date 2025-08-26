@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import Company from "../models/Company.js";
 import bcrypt from "bcryptjs";
-import {sendEmail} from "../utils/sendEmail.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ export const createEmployee = async (req, res, next) => {
 export const listEmployeesByBranch = async (req, res, next) => {
   try {
     const employees = await Employee.find({ branch: req.params.branchId })
-      
+
       .populate("branch");
     res.json(employees);
   } catch (err) {
@@ -35,9 +35,10 @@ export const listEmployeesByBranch = async (req, res, next) => {
 export const getEmployee = async (req, res, next) => {
   try {
     const employee = await Employee.findOne({ user: req.params.id });
-      
-     // .populate("branch");
-    if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+    // .populate("branch");
+    if (!employee)
+      return res.status(404).json({ message: "Employee not found" });
     res.json(employee);
   } catch (err) {
     next(err);
@@ -47,13 +48,14 @@ export const getEmployee = async (req, res, next) => {
 // ========== Update/Delete Employee ==========
 export const updateEmployee = async (req, res, next) => {
   try {
-    const { branch, workMode,officeStartTime, officeEndTime } = req.body;
+    const { branch, workMode, officeStartTime, officeEndTime } = req.body;
     const employee = await Employee.findById(req.params.id);
-    if (!employee) return res.status(404).json({ message: "Employee not found" });
+    if (!employee)
+      return res.status(404).json({ message: "Employee not found" });
 
     if (branch) employee.branch = branch;
     if (workMode) employee.workMode = workMode;
-     if (officeStartTime) employee.officeStartTime = officeStartTime;
+    if (officeStartTime) employee.officeStartTime = officeStartTime;
     if (officeEndTime) employee.officeEndTime = officeEndTime;
 
     // optional: ensure start < end
@@ -75,7 +77,8 @@ export const updateEmployee = async (req, res, next) => {
 export const deleteEmployee = async (req, res, next) => {
   try {
     const employee = await Employee.findById(req.params.id);
-    if (!employee) return res.status(404).json({ message: "Employee not found" });
+    if (!employee)
+      return res.status(404).json({ message: "Employee not found" });
 
     await User.findByIdAndDelete(employee.email);
     await employee.deleteOne();
@@ -103,12 +106,11 @@ export const inviteEmployee = async (req, res, next) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-     const companyId = req.user.companyId || branch.company;
+    const companyId = req.user.companyId || branch.company;
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
     }
-
 
     // create user (inactive until registration)
     user = new User({
@@ -135,12 +137,12 @@ export const inviteEmployee = async (req, res, next) => {
     await employee.save();
 
     // create invite token
-    const token = jwt.sign(
-      { email, branchId },
-      process.env.JWT_SECRET,
-      { expiresIn: "2d" }
-    );
-    const inviteUrl = `http://localhost:5000/register?token=${token}`;
+    const token = jwt.sign({ email, branchId }, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
+    const frontendBaseUrl =
+      process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+    const inviteUrl = `${frontendBaseUrl}/register-employees/${token}`;
     await sendEmail({
       to: email,
       subject: "You're invited to join EasyGo",
@@ -203,7 +205,8 @@ export const registerEmployeeFromInvite = async (req, res, next) => {
 
 export const updateEmployeeProfile = async (req, res, next) => {
   try {
-    const { name, address, workMode, officeStartTime, officeEndTime } = req.body;
+    const { name, address, workMode, officeStartTime, officeEndTime } =
+      req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -212,7 +215,8 @@ export const updateEmployeeProfile = async (req, res, next) => {
     await user.save();
 
     const employee = await Employee.findOne({ user: req.user.id });
-    if (!employee) return res.status(404).json({ message: "Employee not found" });
+    if (!employee)
+      return res.status(404).json({ message: "Employee not found" });
 
     if (address) employee.address = address;
     if (workMode) employee.workMode = workMode;
@@ -234,5 +238,3 @@ export const updateEmployeeProfile = async (req, res, next) => {
     next(err);
   }
 };
-
-
