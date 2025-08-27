@@ -88,17 +88,22 @@ export const updateEmployee = async (req, res, next) => {
 export const deleteEmployee = async (req, res, next) => {
   try {
     const employee = await Employee.findById(req.params.id);
-    if (!employee)
-      return res.status(404).json({ message: "Employee not found" });
+    if (!employee) return res.status(404).json({ message: "Employee not found" });
 
-    await User.findByIdAndDelete(employee.email);
-    await employee.deleteOne();
+    // Delete linked user document
+    if (employee.user) {
+      await User.findByIdAndDelete(employee.user);
+    }
 
-    res.json({ message: "Employee deleted" });
+    // Delete employee document
+    await Employee.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Employee and linked user deleted successfully" });
   } catch (err) {
     next(err);
   }
 };
+
 
 // ========== Invite Employee ==========
 export const inviteEmployee = async (req, res, next) => {
@@ -123,9 +128,10 @@ export const inviteEmployee = async (req, res, next) => {
       return res.status(404).json({ message: "Company not found" });
     }
 
+    const nameFromEmail = email.split("@")[0];
     // create user (inactive until registration)
     user = new User({
-      name: email.split("@")[0],
+      name:nameFromEmail,
       email,
       role: "EMPLOYEE",
       companyId: req.user.companyId, // from token
@@ -176,6 +182,47 @@ export const inviteEmployee = async (req, res, next) => {
 // =======================
 // Register Employee
 // =======================
+// export const registerEmployeeFromInvite = async (req, res, next) => {
+//   try {
+//     const { token } = req.params;
+//     const { name, password, address } = req.body;
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const { email } = decoded;
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(400).json({ message: "Invalid or expired invite" });
+//     }
+
+//     if (user.password !== "temp") {
+//       return res.status(400).json({ message: "User already registered" });
+//     }
+
+//      console.log("Registration name received:", name);
+
+//     user.name = name;
+//     user.password = await bcrypt.hash(password, 10);
+//     await user.save();
+
+//     const employee = await Employee.findOne({ user: user._id });
+//     if (employee) {
+//       employee.name = name;
+//       employee.password = user.password;
+//       employee.address = address;
+//       await employee.save();
+//     }
+
+//     res.status(201).json({
+//       message: "Employee registered successfully",
+//       user,
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
 export const registerEmployeeFromInvite = async (req, res, next) => {
   try {
     const { token } = req.params;
@@ -197,22 +244,30 @@ export const registerEmployeeFromInvite = async (req, res, next) => {
     user.password = await bcrypt.hash(password, 10);
     await user.save();
 
-    const employee = await Employee.findOne({ user: user._id });
-    if (employee) {
-      employee.name = name;
-      employee.password = user.password;
-      employee.address = address;
-      await employee.save();
+    // Update employee with new name, password, and address using findOneAndUpdate
+    const employee = await Employee.findOneAndUpdate(
+      { user: user._id },
+      { name, password: user.password, address },
+      { new: true }
+    );
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee record not found" });
     }
+
+    // For further debugging, you could log:
+    console.log("Updated Employee:", employee);
 
     res.status(201).json({
       message: "Employee registered successfully",
       user,
+      employee,
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
+
 
 export const updateEmployeeProfile = async (req, res, next) => {
   try {

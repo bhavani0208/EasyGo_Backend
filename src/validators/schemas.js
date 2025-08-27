@@ -40,7 +40,7 @@ export const inviteCreateSchema = {
 export const inviteAcceptSchema = {
   body: z.object({
     
-    name: z.string().min(2).optional(),
+    name: z.string().min(2),
     password: z.string().min(6),
     homeLocation: z.string().optional(),
   }),
