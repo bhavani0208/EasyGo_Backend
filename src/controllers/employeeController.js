@@ -30,6 +30,17 @@ export const listEmployeesByBranch = async (req, res, next) => {
     next(err);
   }
 };
+export const listEmployeesByCompany = async (req, res, next) => {
+  try {
+    const companyId = req.params.companyId;
+    const employees = await Employee.find({ company: companyId }).populate(
+      "branch"
+    );
+    res.status(200).json(employees);
+  } catch (err) {
+    next(err);
+  }
+};
 
 // ========== Get Single Employee ==========
 export const getEmployee = async (req, res, next) => {

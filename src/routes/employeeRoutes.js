@@ -7,11 +7,16 @@ import {
   updateEmployee,
   deleteEmployee,
   listEmployeesByBranch,
+  listEmployeesByCompany,
 } from "../controllers/employeeController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validator.js";
 
-import { inviteCreateSchema,inviteAcceptSchema,updateEmployeeSchema } from "../validators/schemas.js";
+import {
+  inviteCreateSchema,
+  inviteAcceptSchema,
+  updateEmployeeSchema,
+} from "../validators/schemas.js";
 const router = express.Router();
 
 /**
@@ -46,7 +51,7 @@ const router = express.Router();
 router.post(
   "/invite",
   protect,
-  authorize("SUPERADMIN","ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   validate(inviteCreateSchema),
   inviteEmployee
 );
@@ -76,7 +81,11 @@ router.post(
  *     responses:
  *       "201": { description: Employee registered }
  */
-router.post("/register/:token",validate(inviteAcceptSchema), registerEmployeeFromInvite);
+router.post(
+  "/register/:token",
+  validate(inviteAcceptSchema),
+  registerEmployeeFromInvite
+);
 
 /**
  * @openapi
@@ -97,7 +106,7 @@ router.post("/register/:token",validate(inviteAcceptSchema), registerEmployeeFro
 router.get(
   "/branch/:branchId",
   protect,
-  authorize("SUPERADMIN","ADMIN"),
+  authorize("SUPERADMIN", "ADMIN"),
   listEmployeesByBranch
 );
 
@@ -179,11 +188,17 @@ router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
  *                   end:
  *                     type: string
  *                     description: Office end time (HH:mm, 24hr)
- *                     example: "18:00"  
+ *                     example: "18:00"
  *     responses:
  *       "200": { description: Employee updated }
  */
-router.put("/:id", protect, authorize("SUPERADMIN", "ADMIN"),validate(updateEmployeeSchema),updateEmployee);
+router.put(
+  "/:id",
+  protect,
+  authorize("SUPERADMIN", "ADMIN"),
+  validate(updateEmployeeSchema),
+  updateEmployee
+);
 
 /**
  * @openapi
@@ -208,7 +223,69 @@ router.delete(
   deleteEmployee
 );
 
-//router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
+/**
+ * @openapi
+ * /api/employees/company/{companyId}:
+ *   get:
+ *     summary: List employees by company (Admin or Superadmin only)
+ *     tags:
+ *       - Employees
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the company to get employees for
+ *     responses:
+ *       "200":
+ *         description: List of employees for the company
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 64d77eea3ef5a9a10c4d8fa5
+ *                   name:
+ *                     type: string
+ *                     example: John Doe
+ *                   email:
+ *                     type: string
+ *                     example: john.doe@example.com
+ *                   role:
+ *                     type: string
+ *                     example: EMPLOYEE
+ *                   branch:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: 64d77e9f3ef5a9a10c4d8fa0
+ *                       name:
+ *                         type: string
+ *                         example: Main Branch
+ *       "401":
+ *         description: Unauthorized (missing or invalid token)
+ *       "403":
+ *         description: Forbidden (insufficient permissions)
+ *       "404":
+ *         description: Company not found or no employees
+ *       "500":
+ *         description: Internal server error
+ */
+router.get(
+  "/company/:companyId",
+  protect,
+  authorize("SUPERADMIN", "ADMIN"),
+  listEmployeesByCompany
+);
 
+//router.put("/profile", protect, authorize("EMPLOYEE"), updateEmployeeProfile);
 
 export default router;
