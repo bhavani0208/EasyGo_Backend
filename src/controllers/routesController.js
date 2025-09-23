@@ -48,10 +48,11 @@ export const getRouteByCoords = async (req, res, next) => {
 
 export const getRouteForEmployee = async (req, res, next) => {
   try {
-    const { profile } = req.query;
+    const { profile, departAt } = req.query; // departAt optional ISO string
     const result = await routesService.getForEmployee(
       req.params.employeeId,
-      profile
+      profile,
+      departAt
     );
     res.json(result);
   } catch (err) {
@@ -61,10 +62,11 @@ export const getRouteForEmployee = async (req, res, next) => {
 
 export const notifyEmployeeRoute = async (req, res, next) => {
   try {
-    const { profile } = req.query;
+    const { profile, departAt } = req.query;
     const result = await routesService.notifyEmployeeRoute(
       req.params.employeeId,
-      profile
+      profile,
+      departAt
     );
     res.json(result);
   } catch (err) {

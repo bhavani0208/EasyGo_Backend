@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const isoDateString = z.string().optional();
+
 const coord = z.object({
   lat: z.number().gte(-90).lte(90),
   lng: z.number().gte(-180).lte(180),
@@ -17,23 +19,25 @@ export const routeByCoordsSchema = {
 };
 
 export const routeForEmployeeSchema = {
-  params: z.object({
-    employeeId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid employee id"),
-  }),
+  params: z.object({ employeeId: z.string().regex(/^[a-f0-9]{24}$/i) }),
   query: z
     .object({
-      profile,
+      profile: z
+        .enum(["driving-car", "driving-hgv", "foot-walking", "cycling-regular"])
+        .optional(),
+      departAt: isoDateString,
     })
     .optional(),
 };
 
 export const routeNotifySchema = {
-  params: z.object({
-    employeeId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid employee id"),
-  }),
+  params: z.object({ employeeId: z.string().regex(/^[a-f0-9]{24}$/i) }),
   query: z
     .object({
-      profile,
+      profile: z
+        .enum(["driving-car", "driving-hgv", "foot-walking", "cycling-regular"])
+        .optional(),
+      departAt: isoDateString,
     })
     .optional(),
 };
