@@ -151,7 +151,18 @@ router.get(
  *             properties:
  *               name: { type: string }
  *               address: { type: string }
- *               workMode: { type: string, enum: [HOME, OFFICE, HYBRID] }
+ *               workMode: { type: string, enum: [REMOTE, OFFICE, HYBRID] }
+ *               officeTimings:
+ *                 type: object
+ *                 properties:
+ *                   start:
+ *                     type: string
+ *                     description: Office start time (HH:mm, 24hr)
+ *                     example: "09:00"
+ *                   end:
+ *                     type: string
+ *                     description: Office end time (HH:mm, 24hr)
+ *                     example: "18:00"
  *     responses:
  *       "200": { description: Profile updated }
  */

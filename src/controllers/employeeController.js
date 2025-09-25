@@ -225,25 +225,30 @@ export const registerEmployeeFromInvite = async (req, res, next) => {
 
 export const updateEmployeeProfile = async (req, res, next) => {
   try {
-    const { name, address, workMode, officeStartTime, officeEndTime } =
-      req.body;
+    const { name, address, workMode, officeTimings } = req.body;
 
+    // Update User
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
-
     if (name) user.name = name;
+    if (workMode) user.workMode = workMode;
     await user.save();
 
+    // Update Employee
     const employee = await Employee.findOne({ user: req.user.id });
     if (!employee)
       return res.status(404).json({ message: "Employee not found" });
 
+    if (name) employee.name = name;
     if (address) employee.address = address;
     if (workMode) employee.workMode = workMode;
 
-    if (officeStartTime) employee.officeStartTime = officeStartTime;
-    if (officeEndTime) employee.officeEndTime = officeEndTime;
+    if (officeTimings) {
+      if (officeTimings.start) employee.officeStartTime = officeTimings.start;
+      if (officeTimings.end) employee.officeEndTime = officeTimings.end;
+    }
 
+    // Validate office timings
     if (employee.officeStartTime && employee.officeEndTime) {
       if (employee.officeStartTime >= employee.officeEndTime) {
         return res.status(400).json({
@@ -251,9 +256,14 @@ export const updateEmployeeProfile = async (req, res, next) => {
         });
       }
     }
+
     await employee.save();
 
-    res.json({ message: "Profile updated", user, employee });
+    res.json({
+      message: "Profile updated in both User and Employee",
+      user,
+      employee,
+    });
   } catch (err) {
     next(err);
   }
